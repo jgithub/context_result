@@ -1,18 +1,16 @@
-ass ContextResult
-  LOGGER = Catamaran.logger.vayor.app.utils.ContextResult
-
-  attr_accessor :object
+class ContextResult
+  attr_accessor :result
   attr_accessor :is_present
 
   # Always based on UTC Time
   attr_accessor :created_at
 
   def self.present_instance( attributes = nil )
-    if attributes && attributes.respond_to(:keys)
+    if attributes && attributes.respond_to?(:keys) && attributes.respond_to?(:each)
       context_result = new(attributes)
     else
       context_result = new 
-      context_result.object = attributes
+      context_result.result = attributes
     end
     context_result.is_present = true
     context_result
@@ -25,8 +23,17 @@ ass ContextResult
   end
 
   def initialize( attributes = nil )
-    attributes && attributes.respond_to?(:each) && attributes.each do |name, value|
-      send("#{name}=", value) if respond_to? name.to_sym 
+    if attributes
+      if attributes.respond_to?(:keys) && attributes.respond_to?(:each)
+        attributes.each do |name, value|
+          send("#{name}=", value) if respond_to?( name )
+        end
+      else
+        self.is_present = true
+
+        # attributes is an object
+        self.result = attributes
+      end
     end      
   end
 
@@ -51,7 +58,6 @@ ass ContextResult
       retval = nil 
     end 
 
-    LOGGER.debug("ContextResult is #{retval ? 'OLDER' : 'NOT older'} than #{number_of_seconds} seconds: #{self}") if LOGGER.debug?
     return retval
   end
 
@@ -66,8 +72,23 @@ ass ContextResult
       retval = nil 
     end 
 
-    LOGGER.debug("ContextResult is #{retval ? 'YOUNGER' : 'NOT younger'} than #{number_of_seconds} seconds: #{self}") if LOGGER.debug?
     return retval
+  end
+
+  def created_at=( value )
+    if value 
+      if value.respond_to?( :to_time )
+        value = value.to_time
+      end
+
+      if value.respond_to?( :utc )
+        @created_at = value.utc
+      else
+        raise NotImplementedError.new
+      end
+    else
+      @created_at = nil 
+    end
   end
 
   def present?
@@ -79,8 +100,8 @@ ass ContextResult
   end
 
   def to_s
-    retval = "#<#{self.class}:0x#{object_id.to_s(16)}>[is_present=#{is_present}"
-    retval << ",object=#{object}" if object
+    retval = "#<#{self.class}:0x#{result_id.to_s(16)}>[is_present=#{is_present}"
+    retval << ",result=#{result}" if result
     retval << ",created_at=#{(created_at && created_at.respond_to?(:iso8601)) ? created_at.iso8601 : created_at}" if created_at
     retval << "]"
     return retval
