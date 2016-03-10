@@ -1,3 +1,5 @@
+require 'active_support/json'
+
 class ContextResult
   attr_accessor :result
   attr_accessor :is_present
@@ -75,9 +77,23 @@ class ContextResult
     return retval
   end
 
+  def as_json
+    retval = {}
+    retval["result"] = result.as_json if (result || is_present)
+    retval["is_present"] = is_present if is_present
+    retval["created_at"] = (created_at ? created_at.iso8601 : nil) if created_at
+    return retval
+  end
+
+  def to_json
+    as_json.to_json
+  end
+
   def created_at=( value )
     if value 
-      if value.respond_to?( :to_time )
+      if value.instance_of?(String)
+        value = ( Time.parse(value) rescue nil )
+      elsif value.respond_to?( :to_time )
         value = value.to_time
       end
 
