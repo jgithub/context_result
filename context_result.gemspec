@@ -1,10 +1,10 @@
 require File.dirname(__FILE__) + "/lib/context_result/version"
 
 Gem::Specification.new do |s|
-  s.name             = "catamaran"
-  s.version          = Catamaran::VERSION
+  s.name             = "context_result"
+  s.version          = VERSION
   s.authors          = ["Jeano"]
-  s.email            = ["catamaran@jeano.net"]
+  s.email            = ["github@jeano.net"]
   s.summary          = "Context Result"
   s.description      = "Context Result"
   s.homepage         = "http://github.com/jgithub/context_result"
