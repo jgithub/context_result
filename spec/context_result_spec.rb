@@ -138,6 +138,14 @@ describe ContextResult do
       context_result = ContextResult.present_and_created_instance(17)
       expect(context_result.as_json).to eq({"result"=>17, "is_present"=>true, "created_at"=>"2014-11-01T15:10:00Z"})
     end
+
+    context "when errors are present" do 
+      it "automatically includes the errors" do 
+        context_result = ContextResult.present_and_created_instance(17)
+        context_result.errors.add(:base, "testing123")
+        expect(context_result.as_json).to eq({"result"=>17, "is_present"=>true, "created_at"=>"2014-11-01T15:10:00Z", "errors"=>{:base=>["testing123"]}})
+      end
+    end
   end
 
   describe "#to_json" do 
@@ -184,4 +192,12 @@ describe ContextResult do
       end
     end    
   end 
+
+  describe "errors" do 
+    it "works like rails" do 
+      context_result = ContextResult.new
+      context_result.errors.add(:base, "testing123")
+      expect( context_result.errors.as_json ).to eq({:base=>["testing123"]})
+    end
+  end
 end

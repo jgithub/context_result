@@ -1,11 +1,29 @@
 require 'active_support/json'
+require 'active_model'
+require 'context_result/context_normalized'
+require 'context_result/context_normalized_payload'
 
 class ContextResult
+  extend ActiveModel::Naming
+
   attr_accessor :result
   attr_accessor :is_present
 
   # Always based on UTC Time
   attr_accessor :created_at
+
+  # Sometimes there are root-level errors associated with the ContextResult
+  attr_reader   :errors
+
+  # Sometimes there in a root-level exception associated with the ContextResult  
+  attr_reader   :exception
+
+  # Use this for tracking a related "request" if appropriate.  This is usually a ContextNormalized object
+  attr_accessor :request
+
+  # Use this for tracking a related "response" if appropriate.  This is usually a ContextNormalized object
+  attr_accessor :response
+
 
   def self.present_instance( attributes = nil )
     if attributes && attributes.respond_to?(:keys) && attributes.respond_to?(:each)
@@ -25,6 +43,9 @@ class ContextResult
   end
 
   def initialize( attributes = nil )
+    # Should this be instanatiated here.  It's more to garbage collect if it's not used
+    @errors = ActiveModel::Errors.new(self)
+
     if attributes
       if attributes.respond_to?(:keys) && attributes.respond_to?(:each)
         attributes.each do |name, value|
@@ -79,9 +100,18 @@ class ContextResult
 
   def as_json
     retval = {}
-    retval["result"] = result.as_json if (result || is_present)
+    if (result || is_present)
+      if result.respond_to?(:as_json)
+        retval["result"] = result.as_json 
+      else
+        retval["result"] = "#{result}"
+      end
+    end
     retval["is_present"] = is_present if is_present
     retval["created_at"] = (created_at ? created_at.iso8601 : nil) if created_at
+    if errors.size > 0
+      retval["errors"] = errors.as_json
+    end
     return retval
   end
 
